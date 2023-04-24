@@ -4,8 +4,10 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login
+from rest_framework.authentication import TokenAuthentication
 from .serializers import ShopUserSerializer
 from .models import ShopUser
+from rest_framework.views import APIView
 
 class RegisterUser(generics.CreateAPIView):
     queryset = ShopUser.objects.all()
@@ -21,7 +23,7 @@ class LoginUser(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
     
-        username =serializer.validated_data.get('username')
+        username =serializer.validated_data.get('username') # only use get method if you are very sure that the values are being passed
         password = serializer.validated_data.get('password')
         print(username)
         print(password)
@@ -47,4 +49,20 @@ class LoginUser(generics.GenericAPIView):
             'username': username,
         }
 
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(response)
+
+
+class LogoutUser(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    def post(self,request):
+        token = request.auth
+        token.delete()
+
+        response = {
+            'success':True,
+            'statuscode':status.HTTP_200_OK,
+            'Message':'Logged Out User Successfully',
+        }
+
+        return Response(response)

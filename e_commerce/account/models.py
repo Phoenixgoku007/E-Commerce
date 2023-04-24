@@ -15,4 +15,4 @@ class ShopUser(AbstractUser):
         (CUSTOMER, "Customer"),
     ]
 
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default= CUSTOMER)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=CUSTOMER)

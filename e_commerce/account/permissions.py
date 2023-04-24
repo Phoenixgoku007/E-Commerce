@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission
 from .models import ShopUser
+from rest_framework.permissions import SAFE_METHODS
 
 class RolePermission(BasePermission):
     def has_permission(self, request, view):
@@ -9,5 +10,5 @@ class RolePermission(BasePermission):
         return (
             request.user.role == ShopUser.ADMIN or
             request.user.role == ShopUser.STAFF and request.method in ('GET','PUT','PATCH') or
-            request.user.role == ShopUser.CUSTOMER and request.method in ('GET', 'HEAD', 'OPTIONS')
+            request.user.role == ShopUser.CUSTOMER and request.method in SAFE_METHODS
         )

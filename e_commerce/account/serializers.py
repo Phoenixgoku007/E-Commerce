@@ -4,7 +4,7 @@ from .models import ShopUser
 
 class ShopUserSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=50)
-    password = serializers.CharField(max_length=100)
+    password = serializers.CharField(max_length=100, write_only=True)
     
     def create(self, validated_data):
         user = ShopUser.objects.create(

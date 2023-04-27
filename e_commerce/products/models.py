@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+import random, string
 # Create your models here.
 
 class Products(models.Model):
@@ -13,8 +14,13 @@ class Products(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-
-            self.slug = slugify(self.name)
+            try:
+                self.slug = slugify(self.name)
+                super(Products, self).save(*args, **kwargs)
+            except:
+                mixed_values = ''.join(random.choices(string.ascii_lowercase + string.digits + string.ascii_uppercase, k=20))
+                self.slug = slugify(self.name) + mixed_values
+                super(Products, self).save(*args, **kwargs)
         super(Products, self).save(*args, **kwargs)
     
     

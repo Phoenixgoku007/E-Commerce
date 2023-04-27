@@ -1,9 +1,8 @@
 from django.urls import path
-from .views import CartViewSet, CartItemsViewSet
-from rest_framework import routers
+from .views import CartView, CartUpdate
 
-router = routers.DefaultRouter()
-router.register('cart',CartViewSet, basename='cart')
-router.register('cart',CartItemsViewSet, basename='cart')
-
-urlpatterns =router.urls
+urlpatterns = [
+    path('cartview/',CartView.as_view(),name='cartview'),
+    path('cartupdate/<int:pk>/',CartUpdate.as_view(),name='cartupdate'),
+    #path('cartupdate/<int:pk>/',CartUpdate.as_view(), name='cartupdate'),
+]

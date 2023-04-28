@@ -12,14 +12,14 @@ class CartView(APIView):
 
     def get(self, request):
 
-        cart = request.user.get_cart()
+        cart = request.user.get_cart()  # gets the cart object from the get_cart method present in user model
         serializer = CartSerializer(cart)
         return Response(serializer.data)
     
     def post(self, request):
         
         cart = request.user.get_cart()
-        context = {"cart" : cart}
+        context = {"cart" : cart} # for setting the cart id number automatically while creating a new cart 
         serializer = CartItemSerializer(data=request.data, context=context)
 
         if serializer.is_valid():

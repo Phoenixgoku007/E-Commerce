@@ -43,13 +43,21 @@ INSTALLED_APPS = [
     'products',
     'cart',
     'order',
+    'payment',
 ]
 
+# Rest Framework 
+# ------------------------------------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ]
 }
+
+# Payments & Transactions
+# ------------------------------------------------------------------------------
+RAZOR_KEY_ID = 'rzp_test_1THXoALqJ9SdD9'
+RAZOR_KEY_SECRET = 'D0NcdUzWOcrld06gXNKLQ6sr'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -137,5 +145,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Defining Custom user model for the project otherwise django will refer the default User model
 
 AUTH_USER_MODEL = 'account.ShopUser'

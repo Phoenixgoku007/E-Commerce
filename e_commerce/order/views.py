@@ -13,16 +13,15 @@ class OrderView(APIView):
     #permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        cart_obj = request.user.get_cart()
-        order = cart_obj.cart_items.filter(status="Pending")
-        serializer = OrderSerializer(order)
+        cart = request.user.get_cart()
+        orders = cart.cart_items.filter(cart=cart,status=Order.PENDING)
+        serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
     
     def post(self, request):
-        serializer = OrderSerializer(data=request.data)
+        cart = request.user.get_cart()
+        serializer = OrderSerializer(data=request.data, context={'cart':cart})
         if serializer.is_valid():
-            status =serializer.validated_data['status']
-
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)

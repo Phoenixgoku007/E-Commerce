@@ -11,32 +11,33 @@ env = environ.Env()
 
 # you have to create .env file in same folder where you are using environ.Env()
 # reading .env file which located in api folder
+# pre-commit tool has been added to this project
 environ.Env.read_env()
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def start_payment(request):
     # request.data is coming from frontend
-    amount = request.data['amount']
-    name = request.data['name']
+    amount = request.data["amount"]
+    name = request.data["name"]
 
     # setup razorpay client this is the client to whome user is paying money that's you
-    client = razorpay.Client(auth=(env('PUBLIC_KEY'), env('SECRET_KEY')))
+    client = razorpay.Client(auth=(env("PUBLIC_KEY"), env("SECRET_KEY")))
 
     # create razorpay order
     # the amount will come in 'paise' that means if we pass 50 amount will become
-    # 0.5 rupees that means 50 paise so we have to convert it in rupees. So, we will 
+    # 0.5 rupees that means 50 paise so we have to convert it in rupees. So, we will
     # mumtiply it by 100 so it will be 50 rupees.
-    payment_detail = client.payment.create({"amount": int(amount) * 100, 
-                                   "currency": "INR", 
-                                   "payment_capture": "1"})
+    payment_detail = client.payment.create(
+        {"amount": int(amount) * 100, "currency": "INR", "payment_capture": "1"}
+    )
 
     # we are saving an order with isPaid=False because we've just initialized the order
-    # we haven't received the money we will handle the payment succes in next 
+    # we haven't received the money we will handle the payment succes in next
     # function
-    pay = Payment.objects.create(payment_product=name, 
-                                 payment_amount=amount, 
-                                 payment_id=payment_detail['id'])
+    pay = Payment.objects.create(
+        payment_product=name, payment_amount=amount, payment_id=payment_detail["id"]
+    )
 
     serializer = PaymentSerializer(pay)
 
@@ -48,10 +49,7 @@ def start_payment(request):
     'order_payment_id': 'order_G3NhfSWWh5UfjQ', # it will be unique everytime
     'isPaid': False}"""
 
-    data = {
-        "payment": payment_detail,
-        "order": serializer.data
-    }
+    data = {"payment": payment_detail, "order": serializer.data}
     return Response(data)
 
 
@@ -61,8 +59,8 @@ def start_payment(request):
 #     res = json.loads(request.data["response"])
 
 #     """res will be:
-#     {'razorpay_payment_id': 'pay_G3NivgSZLx7I9e', 
-#     'razorpay_order_id': 'order_G3NhfSWWh5UfjQ', 
+#     {'razorpay_payment_id': 'pay_G3NivgSZLx7I9e',
+#     'razorpay_order_id': 'order_G3NhfSWWh5UfjQ',
 #     'razorpay_signature': '76b2accbefde6cd2392b5fbf098ebcbd4cb4ef8b78d62aa5cce553b2014993c0'}
 #     this will come from frontend which we will use to validate and confirm the payment
 #     """
@@ -92,7 +90,7 @@ def start_payment(request):
 
 #     client = razorpay.Client(auth=(env('PUBLIC_KEY'), env('SECRET_KEY')))
 
-#     # checking if the transaction is valid or not by passing above data dictionary in 
+#     # checking if the transaction is valid or not by passing above data dictionary in
 #     # razorpay client if it is "valid" then check will return None
 #     check = client.utility.verify_payment_signature(data)
 

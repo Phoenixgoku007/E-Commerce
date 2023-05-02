@@ -12,26 +12,35 @@ env = environ.Env()
 # you have to create .env file in same folder where you are using environ.Env()
 # reading .env file which located in api folder
 # pre-commit tool has been added to this project
+# RAZOR_KEY_ID = 'rzp_test_1THXoALqJ9SdD9' RAZOR_KEY_SECRET = 'D0NcdUzWOcrld06gXNKLQ6sr'
 environ.Env.read_env()
 
 
 @api_view(["POST"])
 def start_payment(request):
     # request.data is coming from frontend
+
     amount = request.data["amount"]
     name = request.data["name"]
+    currency = "INR"
 
     # setup razorpay client this is the client to whome user is paying money that's you
-    client = razorpay.Client(auth=(env("PUBLIC_KEY"), env("SECRET_KEY")))
+    client = razorpay.Client(
+        auth=("rzp_test_1THXoALqJ9SdD9", "D0NcdUzWOcrld06gXNKLQ6sr")
+    )
 
     # create razorpay order
     # the amount will come in 'paise' that means if we pass 50 amount will become
     # 0.5 rupees that means 50 paise so we have to convert it in rupees. So, we will
     # mumtiply it by 100 so it will be 50 rupees.
-    payment_detail = client.payment.create(
+    payment_detail = client.order.create(
         {"amount": int(amount) * 100, "currency": "INR", "payment_capture": "1"}
     )
 
+    payment_response = client.order.payments(
+        (payment_detail["id"]).create(amount=amount, currency=currency)
+    )
+    print(payment_response)
     # we are saving an order with isPaid=False because we've just initialized the order
     # we haven't received the money we will handle the payment succes in next
     # function
@@ -53,57 +62,31 @@ def start_payment(request):
     return Response(data)
 
 
-# @api_view(['POST'])
-# def handle_payment_success(request):
-#     # request.data is coming from frontend
-#     res = json.loads(request.data["response"])
+@api_view(["POST"])
+def verify_payment(request):
+    # get the payment_id and razorpay_payment_id from the POST request
+    payment_id = request.data.get("payment_id")
+    razorpay_payment_id = request.data.get("razorpay_payment_id")
 
-#     """res will be:
-#     {'razorpay_payment_id': 'pay_G3NivgSZLx7I9e',
-#     'razorpay_order_id': 'order_G3NhfSWWh5UfjQ',
-#     'razorpay_signature': '76b2accbefde6cd2392b5fbf098ebcbd4cb4ef8b78d62aa5cce553b2014993c0'}
-#     this will come from frontend which we will use to validate and confirm the payment
-#     """
+    # create a razorpay client
+    client = razorpay.Client(
+        auth=("rzp_test_1THXoALqJ9SdD9", "D0NcdUzWOcrld06gXNKLQ6sr")
+    )
 
-#     ord_id = ""
-#     raz_pay_id = ""
-#     raz_signature = ""
+    # fetch the payment details from Razorpay
+    payment = client.payment.fetch(razorpay_payment_id)
 
-#     # res.keys() will give us list of keys in res
-#     for key in res.keys():
-#         if key == 'razorpay_order_id':
-#             ord_id = res[key]
-#         elif key == 'razorpay_payment_id':
-#             raz_pay_id = res[key]
-#         elif key == 'razorpay_signature':
-#             raz_signature = res[key]
+    # check if the payment amount and currency match the order
+    if payment["amount"] != order.payment_amount * 100 or payment["currency"] != "INR":
+        return Response({"message": "Payment verification failed."}, status=400)
 
-#     # get order by payment_id which we've created earlier with isPaid=False
-#     order = Order.objects.get(order_payment_id=ord_id)
+    # update the order status if the payment is successful
+    if payment["status"] == "captured":
+        order = Payment.objects.get(payment_id=payment_id)
+        order.is_paid = True
+        order.save()
+        return Response(
+            {"message": "Payment verified and order status updated."}, status=200
+        )
 
-#     # we will pass this whole data in razorpay client to verify the payment
-#     data = {
-#         'razorpay_order_id': ord_id,
-#         'razorpay_payment_id': raz_pay_id,
-#         'razorpay_signature': raz_signature
-#     }
-
-#     client = razorpay.Client(auth=(env('PUBLIC_KEY'), env('SECRET_KEY')))
-
-#     # checking if the transaction is valid or not by passing above data dictionary in
-#     # razorpay client if it is "valid" then check will return None
-#     check = client.utility.verify_payment_signature(data)
-
-#     if check is not None:
-#         print("Redirect to error url or error page")
-#         return Response({'error': 'Something went wrong'})
-
-#     # if payment is successful that means check is None then we will turn isPaid=True
-#     order.isPaid = True
-#     order.save()
-
-#     res_data = {
-#         'message': 'payment successfully received!'
-#     }
-
-#     return Response(res_data)
+    return Response({"message": "Payment verification failed."}, status=400)

@@ -22,7 +22,6 @@ def start_payment(request):
 
     amount = request.data["amount"]
     name = request.data["name"]
-    currency = "INR"
 
     # setup razorpay client this is the client to whome user is paying money that's you
     client = razorpay.Client(
@@ -37,10 +36,6 @@ def start_payment(request):
         {"amount": int(amount) * 100, "currency": "INR", "payment_capture": "1"}
     )
 
-    payment_response = client.order.payments(
-        (payment_detail["id"]).create(amount=amount, currency=currency)
-    )
-    print(payment_response)
     # we are saving an order with isPaid=False because we've just initialized the order
     # we haven't received the money we will handle the payment succes in next
     # function

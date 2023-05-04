@@ -1,19 +1,58 @@
 import json
 import environ
 import razorpay
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from razorpay import Client
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
+from django.views.generic import TemplateView
 from .models import Payment
+from account.models import ShopUser
+from order.models import Order
 from .serializers import PaymentSerializer
 
-env = environ.Env()
+# env = environ.Env()
 
 # you have to create .env file in same folder where you are using environ.Env()
 # reading .env file which located in api folder
 # pre-commit tool has been added to this project
 # RAZOR_KEY_ID = 'rzp_test_1THXoALqJ9SdD9' RAZOR_KEY_SECRET = 'D0NcdUzWOcrld06gXNKLQ6sr'
-environ.Env.read_env()
+
+# environ.Env.read_env()
+
+
+# class StartPayment(GenericAPIView):
+#     queryset = Payment.objects.all()
+#     serializer_class = PaymentSerializer
+
+#     def post(self, request):
+#         serializer = self.serializer_class(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         breakpoint()
+#         amount = serializer.validated_data['amount']
+#         name = serializer.validated_data['name']
+
+#         client = razorpay.Client(
+#             auth=("rzp_test_1THXoALqJ9SdD9", "D0NcdUzWOcrld06gXNKLQ6sr")
+#         )
+
+#         payment_detail = client.order.create(
+#             {"amount": int(amount) * 100, "currency": "INR", "payment_capture": "1"}
+#         )
+
+#         pay = Payment.objects.create(
+#              payment_product=name, payment_amount=amount, payment_id=payment_detail["id"]
+#         )
+
+#         serializer = PaymentSerializer(pay)
+
+#         data = {"payment": payment_detail, "order": serializer.data}
+
+#         return Response(data)
 
 
 @api_view(["POST"])
@@ -29,9 +68,7 @@ def start_payment(request):
     )
 
     # create razorpay order
-    # the amount will come in 'paise' that means if we pass 50 amount will become
-    # 0.5 rupees that means 50 paise so we have to convert it in rupees. So, we will
-    # mumtiply it by 100 so it will be 50 rupees.
+    # the amount will come in 'paise' so multiply with 100
     payment_detail = client.order.create(
         {"amount": int(amount) * 100, "currency": "INR", "payment_capture": "1"}
     )
@@ -57,31 +94,84 @@ def start_payment(request):
     return Response(data)
 
 
+class PaymentView(TemplateView):
+    template_name = "pay.html"
+
+
+# class PaymentSuccess(APIView):
+#     def post(self,request):
+#         breakpoint()
+#         serializer = PaymentSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         razorpay_payment_id = serializer.validated_data['payment_id']
+#         razorpay_order_id = serializer.validated_data['razorpay_order_id']
+#         razorpay_signature = serializer.validated_data['razorpay_signature']
+
+#         client = Client(auth=('rzp_test_1THXoALqJ9SdD9', 'D0NcdUzWOcrld06gXNKLQ6sr'))
+
+#         data = {
+#             'razorpay_order_id': razorpay_order_id,
+#             'razorpay_payment_id': razorpay_payment_id,
+#             'razorpay_signature': razorpay_signature
+#         }
+
+#         try:
+#             client.utility.verify_payment_signature(data)
+#             payment = Payment.objects.get(payment_id = razorpay_order_id )
+#             payment.is_paid=True
+#             payment.save()
+#             order = Order.objects.get(cart_id=1)
+#             order.status = 'C'
+#             order.save()
+#         except:
+#             res_data = {
+#                 'message': 'Payment authentication failed!!!'
+#             }
+#             return Response(res_data)
+#         res_data = {
+#         'message': 'payment successfully received!'
+#         }
+#         return Response(res_data)
+
+
+@csrf_exempt
 @api_view(["POST"])
-def verify_payment(request):
-    # get the payment_id and razorpay_payment_id from the POST request
-    payment_id = request.data.get("payment_id")
-    razorpay_payment_id = request.data.get("razorpay_payment_id")
+def payment_success(request):
+    if request.method == "POST":
+        # Get the payment details from the request
+        razorpay_payment_id = request.data.get("razorpay_payment_id")
+        razorpay_order_id = request.data.get("razorpay_order_id")
+        razorpay_signature = request.data.get("razorpay_signature")
 
-    # create a razorpay client
-    client = razorpay.Client(
-        auth=("rzp_test_1THXoALqJ9SdD9", "D0NcdUzWOcrld06gXNKLQ6sr")
-    )
+        # Verify the payment signature
+        client = Client(auth=("rzp_test_1THXoALqJ9SdD9", "D0NcdUzWOcrld06gXNKLQ6sr"))
+        data = {
+            "razorpay_order_id": razorpay_order_id,
+            "razorpay_payment_id": razorpay_payment_id,
+            "razorpay_signature": razorpay_signature,
+        }
+        try:
+            client.utility.verify_payment_signature(data)
+            # cart = request.user.get_cart()
+            payment = Payment.objects.get(payment_id=razorpay_order_id)
+            payment.is_paid = True
+            payment.save()
+            order = Order.objects.get(cart_id=1)
+            order.status = "C"
+            order.save()
 
-    # fetch the payment details from Razorpay
-    payment = client.payment.fetch(razorpay_payment_id)
+        except:
+            # Handle the signature verification error
+            res_data = {"message": "Payment authentication failed!!!"}
+            return Response(res_data)
 
-    # check if the payment amount and currency match the order
-    if payment["amount"] != order.payment_amount * 100 or payment["currency"] != "INR":
-        return Response({"message": "Payment verification failed."}, status=400)
+        # Payment signature is valid. Handle the payment success
+        print("order_id:", razorpay_order_id)
+        print("Payment_id:", razorpay_payment_id)
+        print("Payment_signature:", razorpay_signature)
+        print("Payment Successful")
+        res_data = {"message": "payment successfully received!"}
+        return Response(res_data)
 
-    # update the order status if the payment is successful
-    if payment["status"] == "captured":
-        order = Payment.objects.get(payment_id=payment_id)
-        order.is_paid = True
-        order.save()
-        return Response(
-            {"message": "Payment verified and order status updated."}, status=200
-        )
-
-    return Response({"message": "Payment verification failed."}, status=400)
+    # Return a bad request response if the request method is not POST
+    return HttpResponse(status=status.HTTP_400_BAD_REQUEST)

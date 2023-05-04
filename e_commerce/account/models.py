@@ -4,17 +4,17 @@ from cart.models import Cart
 
 # Create your models here.
 
-"""
-Class to create a Customer user model which inherits all the properties of AbstractUser Model. 
-Only the role field is getting overriden to the model.
-get_cart method either returns or creates an cart object and can be accessed through out the project 
-"""
 
 class ShopUser(AbstractUser):
-    
-    ADMIN = 'A'
-    STAFF = 'S'
-    CUSTOMER = 'C'
+    """
+    Class to create a Customer user model which inherits all the properties of AbstractUser Model.
+    Only the role field is getting overriden to the model.
+    get_cart method either returns or creates an cart object and can be accessed through out the project
+    """
+
+    ADMIN = "A"
+    STAFF = "S"
+    CUSTOMER = "C"
 
     ROLE_CHOICES = [
         (ADMIN, "Admin"),
@@ -30,5 +30,5 @@ class ShopUser(AbstractUser):
         except Cart.DoesNotExist:
             cart = Cart(user=self)
             cart.save()
-        
+
         return cart

@@ -10,21 +10,23 @@ from rest_framework.authentication import TokenAuthentication
 
 # Create your views here.
 
+
 class OrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
     def get(self, request):
         cart = request.user.get_cart()
-        orders = cart.cart_items  # orders = cart.cart_items.filter(cart=cart,status=Order.PENDING)
+        orders = (
+            cart.cart_items
+        )  # orders = cart.cart_items.filter(cart=cart,status=Order.PENDING)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
-    
-    def post(self, request):
-        cart = request.user.get_cart()
-        serializer = OrderSerializer(data=request.data, context={'cart':cart})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+    # def post(self, request):
+    #     cart = request.user.get_cart()
+    #     serializer = OrderSerializer(data=request.data, context={'cart':cart})
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data,status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)

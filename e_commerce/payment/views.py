@@ -1,10 +1,6 @@
-import json
-import environ
 import razorpay
-from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView
 from razorpay import Client
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -18,6 +14,7 @@ from .serializers import (
     StartPaymentSerializer,
     PaymentSuccessSerializer,
 )
+from cart.permissions import CartPermission
 
 # env = environ.Env()
 
@@ -30,7 +27,19 @@ from .serializers import (
 
 
 class StartPayment(APIView):
+    """
+    StartPayment API view to initiate the payment process by getting the amount and name of the product.
+    Verifying the payment initiation with razorpay key id and key secret.
+    Then creating an payment order in the razorpay dashboard
+    atlast saving these details to my postgres db
+    """
+
+    permission_classes = [CartPermission]
+
     def post(self, request):
+        """
+        Function to trigger the payment initiation
+        """
         serializer = StartPaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         amount = serializer.validated_data["amount"]
@@ -55,6 +64,7 @@ class StartPayment(APIView):
         return Response(data)
 
 
+# Function based implementation
 # @api_view(["POST"])
 # def start_payment(request):
 #     # request.data is coming from frontend
@@ -95,11 +105,27 @@ class StartPayment(APIView):
 
 
 class PaymentView(TemplateView):
+    """
+    PaymentView class to proceed with the razorpay payment page.
+    The mentioned html file included necessary codes needed for making a dummy payment using razorpay.
+    Got the payment code from razorpay documentation.
+    """
+
     template_name = "pay.html"
 
 
 class PaymentSuccess(APIView):
+    """
+    PaymentSuccess API view to verify the payment process
+    and update the cart status to completed and payment status to is_paid = True.
+    """
+
+    permission_classes = [CartPermission]
+
     def post(self, request):
+        """
+        Function to trigger the payment verification process
+        """
         serializer = PaymentSuccessSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         razorpay_payment_id = serializer.validated_data["razorpay_payment_id"]
@@ -119,7 +145,9 @@ class PaymentSuccess(APIView):
             payment = Payment.objects.get(payment_id=razorpay_order_id)
             payment.is_paid = True
             payment.save()
-            order = Order.objects.get(cart_id=1)
+            cart = request.user.get_cart()
+            cart_id = cart.id
+            order = Order.objects.get(cart_id=cart_id)
             order.status = "C"
             order.save()
         except:
@@ -129,6 +157,7 @@ class PaymentSuccess(APIView):
         return Response(res_data)
 
 
+# Function based Implmentation
 # @csrf_exempt
 # @api_view(["POST"])
 # def payment_success(request):

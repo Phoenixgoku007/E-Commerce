@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from rest_framework import permissions
 from .serializers import CartSerializer, CartItemSerializer, CartUpdateSerializer
 from rest_framework.response import Response
 from rest_framework import status
@@ -55,6 +54,9 @@ class CartUpdate(APIView):
     permission_classes = [CartPermission]
 
     def put(self, request, pk):
+        """
+        Put function to only update the quantity field of the cart item
+        """
         cart = request.user.get_cart()
         cart_item = cart.items.get(id=pk)
         serializer = CartUpdateSerializer(cart_item, data=request.data)

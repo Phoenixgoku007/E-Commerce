@@ -12,10 +12,19 @@ from rest_framework.authentication import TokenAuthentication
 
 
 class OrderView(APIView):
+    """
+    OrderView class to display the order details like cart items, cart status and user id details.
+
+    """
+
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
     def get(self, request):
+        """
+        Function to get the list of cart items along with the order status.
+        Here cart_items is a related_name present in the Order model
+        """
         cart = request.user.get_cart()
         orders = (
             cart.cart_items

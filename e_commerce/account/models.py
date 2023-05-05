@@ -25,6 +25,11 @@ class ShopUser(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=CUSTOMER)
 
     def get_cart(self):
+        """
+        get_cart is a custom function defined in the user model
+        so that it can be accessed from any other sections like cart,order or payment easily in a structured way.
+        If the user already has an cart it just returns it or it will create an cart for the user and then returns it.
+        """
         try:
             cart = Cart.objects.get(user=self)
         except Cart.DoesNotExist:

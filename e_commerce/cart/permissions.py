@@ -9,6 +9,9 @@ class CartPermission(BasePermission):
     """
 
     def has_permission(self, request, view):
+        """
+        Function to check if the user is logged-in and has the role of Customer
+        """
         if not request.user.is_authenticated:
             return False
         else:

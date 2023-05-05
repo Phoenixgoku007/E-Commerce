@@ -15,12 +15,16 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItems
         fields = ["id", "product", "quantity", "total_price"]
 
-    def get_total_price(
-        self, cart_item: CartItems
-    ):  # overriding the get_attribute method to get the values present in cartitem model
+    def get_total_price(self, cart_item: CartItems):
+        """
+        overriding the get_attribute method to get the quantity and price of cart item to calculate the total price
+        """
         return cart_item.quantity * cart_item.product.price
 
     def create(self, validated_data):
+        """
+        Function to create a new product and adding the quantity to it
+        """
         product = validated_data["product"]
         quantity = validated_data["quantity"]
         cart = self.context["cart"]
@@ -51,14 +55,19 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ["id", "user", "grand_total", "items"]
+        fields = ["id", "user", "items", "grand_total"]
 
     def get_grand_total(self, obj):
+        """
+        Overriding the get_attribute method of serializerMethodField() to loop through all the cart items and
+        first multiplying the product price with the quantity and
+        then adding all the values using sum method
+        """
         return sum(
             item.product.price * item.quantity for item in obj.items.all()
         )  # looping through all the items and getting the total price using the price*quantity formula and then finally returning the total sum using sum method.
 
-    # def get_cart_items(self, instance):
+    # def get_cart_items(self, instance): -> Another approach to return the cart items instead of using items (related_name) field.
     #     request = self.context["request"] # to use the request method inside this get_attribute method
     #     cart = request.user.get_cart()
     #     return CartItemSerializer(cart.items,many=True, read_only=True).data

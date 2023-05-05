@@ -4,23 +4,22 @@ from products.serializers import ProductSerializer
 from rest_framework.viewsets import ModelViewSet
 from account.permissions import RolePermission
 
-"""
-Product create,update,list,delete and retrive using ModelViewset
-"""
 
 class ProductViews(ModelViewSet):
+    """
+    Product create,update,list,delete and retrive using ModelViewset
+    """
 
     queryset = Products.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [RolePermission]
 
-   
 
 """
 The same above operations are done in the below code but using concrete view classes
 """
 
-'''class ProductList(generics.ListAPIView):
+"""class ProductList(generics.ListAPIView):
     queryset = Products.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [RolePermission]
@@ -58,4 +57,4 @@ class ProductUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
         elif user.is_superuser:
             serializer.save(created_by=user)
         else:
-            raise PermissionError("You don't have permission to delete any products")'''
+            raise PermissionError("You don't have permission to delete any products")"""

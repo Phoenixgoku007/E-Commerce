@@ -1,6 +1,11 @@
 from django.db import models
 
+
 class Payment(models.Model):
+    """
+    Payment model with some necessary fields to handle the payment processing.
+    """
+
     payment_product = models.CharField(max_length=70)
     payment_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_id = models.CharField(max_length=120)
@@ -9,4 +14,3 @@ class Payment(models.Model):
 
     def __str__(self):
         return self.payment_product
-    

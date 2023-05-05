@@ -34,6 +34,10 @@ class LoginUser(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        """
+        Function to authenticate the entered login credentials and then creating a token for the respective user.
+        Here I have used both login (session based) and also token but mostly only token should be preferred
+        """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
